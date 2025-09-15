@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questionário Interativo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #2c3e50, #4a6491);
+            color: white;
+            padding: 25px 0;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            background-color: #fff;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 18px;
+            text-align: center;
+            background-color: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .tab-button:hover {
+            background-color: #e9ecef;
+        }
+        
+        .tab-button.active {
+            background-color: #4a6491;
+            color: white;
+            border-bottom: 3px solid #2c3e50;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+            min-height: 500px;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .question-container {
+            margin-bottom: 30px;
+        }
+        
+        .question-text {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #4a6491;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        
+        .option {
+            padding: 18px;
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .option:hover {
+            background-color: #e9ecef;
+            border-color: #4a6491;
+            transform: translateY(-2px);
+        }
+        
+        .option.selected {
+            background-color: #4a6491;
+            color: white;
+            border-color: #2c3e50;
+            box-shadow: 0 5px 15px rgba(74, 100, 145, 0.3);
+        }
+        
+        .option i {
+            font-size: 20px;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 14px 28px;
+            background-color: #4a6491;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        button:hover {
+            background-color: #2c3e50;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e1e4e8;
+        }
+        
+        .summary {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            border: 1px solid #e1e4e8;
+        }
+        
+        .summary h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #4a6491;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .summary-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #4a6491;
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            display: none;
+            border-left: 4px solid #28a745;
+        }
+        
+        .github-info {
+            background: #f5f7fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            border: 1px dashed #4a6491;
+        }
+        
+        .github-info h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .step {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            border-left: 3px solid #4a6491;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #4a6491;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .github-fix {
+            background: #ffdce0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            border-left: 4px solid #cb2431;
+        }
+        
+        .github-fix h3 {
+            color: #cb2431;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .options-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .navigation {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab-button {
+                border-bottom: 1px solid #e1e4e8;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-poll"></i> Sistema de Questionário com Análise</h1>
+            <p class="description">Preencha o questionário e visualize as estatísticas em tempo real. Os dados são salvos localmente no seu navegador.</p>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('questionario')">
+                <i class="fas fa-clipboard-list"></i> Questionário
+            </button>
+            <button class="tab-button" onclick="showTab('resultados')">
+                <i class="fas fa-chart-pie"></i> Resultados
+            </button>
+            <button class="tab-button" onclick="showTab('estatisticas')">
+                <i class="fas fa-chart-line"></i> Estatísticas
+            </button>
+        </div>
+        
+        <div id="questionario" class="tab-content active">
+            <div class="success-message" id="successMessage">
+                <i class="fas fa-check-circle"></i> Questionário finalizado com sucesso! Os dados foram salvos.
+            </div>
+            
+            <div class="question-container">
+                <div class="question-text" id="questionText"></div>
+                <div class="options-container" id="optionsContainer"></div>
+            </div>
+            
+            <div class="navigation">
+                <button id="prevButton" onclick="previousQuestion()" disabled>
+                    <i class="fas fa-arrow-left"></i> Anterior
+                </button>
+                <button id="nextButton" onclick="nextQuestion()">
+                    Próxima <i class="fas fa-arrow-right"></i>
+                </button>
+                <button id="finishButton" onclick="finishQuestionnaire()" disabled>
+                    <i class="fas fa-check"></i> Finalizar
+                </button>
+                <button onclick="newQuestionnaire()">
+                    <i class="fas fa-plus"></i> Novo Questionário
+                </button>
+            </div>
+            
+            <div class="github-fix">
+                <h3><i class="fas fa-exclamation-triangle"></i> Problema com GitHub Pages?</h3>
+                <p>Se o seu site não está funcionando, verifique se:</p>
+                <div class="steps">
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        O arquivo principal se chama <strong>index.html</strong> (não questGenerico.html)
+                    </div>
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        Você ativou o GitHub Pages em Settings > Pages
+                    </div>
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        Selecionou a branch <strong>main</strong> como fonte
+                    </div>
+                    <div class="step">
+                        <span class="step-number">4</span>
+                        Aguardou alguns minutos para o GitHub publicar
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="resultados" class="tab-content">
+            <div class="summary">
+                <h3><i class="fas fa-chart-bar"></i> Resumo das Respostas</h3>
+                <div id="responseCount">Total de respostas: 0</div>
+            </div>
+            
+            <div class="navigation">
+                <button onclick="updateCharts()">
+                    <i class="fas fa-sync-alt"></i> Atualizar Gráficos
+                </button>
+                <button onclick="exportData()">
+                    <i class="fas fa-download"></i> Exportar Dados
+                </button>
+            </div>
+            
+            <div class="stats-container" id="chartsContainer"></div>
+        </div>
+        
+        <div id="estatisticas" class="tab-content">
+            <div class="summary">
+                <h3><i class="fas fa-table"></i> Estatísticas Detalhadas</h3>
+                <div id="detailedStats"></div>
+            </div>
+            
+            <div class="export-buttons">
+                <button onclick="calculateStatistics()">
+                    <i class="fas fa-calculator"></i> Calcular Estatísticas
+                </button>
+                <button onclick="exportStatistics()">
+                    <i class="fas fa-file-export"></i> Exportar Estatísticas
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados do questionário
+        const questions = [
+            {
+                question: "Qual sua faixa etária?",
+                options: ["18-25 anos", "26-35 anos", "36-45 anos", "46+ anos"],
+                icons: ["fas fa-user-graduate", "fas fa-user-tie", "fas fa-user-md", "fas fa-user-friends"]
+            },
+            {
+                question: "Qual seu nível de escolaridade?",
+                options: ["Ensino Médio", "Graduação", "Pós-graduação", "Doutorado"],
+                icons: ["fas fa-school", "fas fa-graduation-cap", "fas fa-certificate", "fas fa-brain"]
+            },
+            {
+                question: "Com que frequência você pratica exercícios?",
+                options: ["Diariamente", "3-4 vezes/semana", "1-2 vezes/semana", "Raramente/Nunca"],
+                icons: ["fas fa-running", "fas fa-walking", "fas fa-walking", "fas fa-couch"]
+            },
+            {
+                question: "Qual seu gênero?",
+                options: ["Masculino", "Feminino", "Prefiro não dizer", "Outro"],
+                icons: ["fas fa-mars", "fas fa-venus", "fas fa-genderless", "fas fa-rainbow"]
+            },
+            {
+                question: "Qual sua área de atuação?",
+                options: ["Tecnologia", "Saúde", "Educação", "Outras"],
+                icons: ["fas fa-laptop-code", "fas fa-heartbeat", "fas fa-chalkboard-teacher", "fas fa-briefcase"]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let currentAnswers = [];
+        let savedData = JSON.parse(localStorage.getItem('questionnaireData')) || [];
+
+        // Inicializar a aplicação
+        function init() {
+            updateQuestion();
+            updateResponseCount();
+        }
+
+        // Mostrar aba selecionada
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            if (tabId === 'resultados') {
+                updateCharts();
+            } else if (tabId === 'estatisticas') {
+                calculateStatistics();
+            }
+        }
+
+        // Atualizar a pergunta atual
+        function updateQuestion() {
+            const questionText = document.getElementById('questionText');
+            const optionsContainer = document.getElementById('optionsContainer');
+            
+            questionText.textContent = `${currentQuestion + 1}. ${questions[currentQuestion].question}`;
+            
+            optionsContainer.innerHTML = '';
+            questions[currentQuestion].options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                if (currentAnswers[currentQuestion] === option) {
+                    optionElement.classList.add('selected');
+                }
+                
+                const iconElement = document.createElement('i');
+                iconElement.className = questions[currentQuestion].icons[index];
+                optionElement.appendChild(iconElement);
+                
+                const textElement = document.createTextNode(option);
+                optionElement.appendChild(textElement);
+                
+                optionElement.onclick = () => selectOption(option);
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            updateNavigation();
+        }
+
+        // Selecionar uma opção
+        function selectOption(option) {
+            currentAnswers[currentQuestion] = option;
+            updateQuestion();
+        }
+
+        // Atualizar botões de navegação
+        function updateNavigation() {
+            document.getElementById('prevButton').disabled = currentQuestion === 0;
+            document.getElementById('nextButton').disabled = currentQuestion === questions.length - 1;
+            document.getElementById('finishButton').disabled = currentQuestion !== questions.length - 1 || !currentAnswers[currentQuestion];
+        }
+
+        // Próxima pergunta
+        function nextQuestion() {
+            if (currentAnswers[currentQuestion]) {
+                currentQuestion++;
+                updateQuestion();
+            } else {
+                alert('Por favor, selecione uma opção antes de continuar.');
+            }
+        }
+
+        // Pergunta anterior
+        function previousQuestion() {
+            currentQuestion--;
+            updateQuestion();
+        }
+
+        // Finalizar questionário
+        function finishQuestionnaire() {
+            if (currentAnswers.length === questions.length && currentAnswers.every(answer => answer !== undefined)) {
+                const response = {
+                    timestamp: new Date().toISOString(),
+                    answers: [...currentAnswers]
+                };
+                
+                savedData.push(response);
+                localStorage.setItem('questionnaireData', JSON.stringify(savedData));
+                
+                document.getElementById('successMessage').style.display = 'block';
+                updateResponseCount();
+                
+                setTimeout(() => {
+                    document.getElementById('successMessage').style.display = 'none';
+                }, 3000);
+                
+                // Mostrar a aba de resultados
+                showTab('resultados');
+            } else {
+                alert('Por favor, responda todas as perguntas antes de finalizar.');
+            }
+        }
+
+        // Novo questionário
+        function newQuestionnaire() {
+            currentQuestion = 0;
+            currentAnswers = [];
+            updateQuestion();
+        }
+
+        // Atualizar contador de respostas
+        function updateResponseCount() {
+            document.getElementById('responseCount').textContent = `Total de respostas: ${savedData.length}`;
+        }
+
+        // Atualizar gráficos
+        function updateCharts() {
+            const chartsContainer = document.getElementById('chartsContainer');
+            chartsContainer.innerHTML = '';
+            
+            if (savedData.length === 0) {
+                chartsContainer.innerHTML = '<p>Nenhum dado disponível para análise.</p>';
+                return;
+            }
+            
+            // Criar gráficos para cada pergunta
+            questions.forEach((question, index) => {
+                const answers = savedData.map(data => data.answers[index]);
+                const counts = {};
+                
+                answers.forEach(answer => {
+                    counts[answer] = (counts[answer] || 0) + 1;
+                });
+                
+                const chartCanvas = document.createElement('canvas');
+                chartCanvas.width = 400;
+                chartCanvas.height = 400;
+                
+                const chartContainer = document.createElement('div');
+                chartContainer.className = 'chart-container';
+                chartContainer.innerHTML = `<h3>${question.question}</h3>`;
+                chartContainer.appendChild(chartCanvas);
+                chartsContainer.appendChild(chartContainer);
+                
+                new Chart(chartCanvas, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(counts),
+                        datasets: [{
+                            data: Object.values(counts),
+                            backgroundColor: [
+                                '#4a6491',
+                                '#2c3e50',
+                                '#8a9ba8',
+                                '#a7b6c2'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            title: {
+                                display: true,
+                                text: question.question
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Calcular estatísticas
+        function calculateStatistics() {
+            const statsContainer = document.getElementById('detailedStats');
+            
+            if (savedData.length === 0) {
+                statsContainer.innerHTML = '<p>Nenhum dado disponível para análise.</p>';
+                return;
+            }
+            
+            let statsHTML = `<p><strong>Total de respostas:</strong> ${savedData.length}</p>`;
+            
+            questions.forEach((question, index) => {
+                const answers = savedData.map(data => data.answers[index]);
+                const counts = {};
+                
+                answers.forEach(answer => {
+                    counts[answer] = (counts[answer] || 0) + 1;
+                });
+                
+                statsHTML += `<div class="summary-item"><strong>${question.question}</strong>`;
+                
+                for (const [answer, count] of Object.entries(counts)) {
+                    const percentage = (count / savedData.length) * 100;
+                    statsHTML += `<div>${answer}: ${count} (${percentage.toFixed(1)}%)</div>`;
+                }
+                
+                statsHTML += '</div>';
+            });
+            
+            // Adicionar data da última resposta
+            if (savedData.length > 0) {
+                const lastResponse = new Date(savedData[savedData.length - 1].timestamp);
+                statsHTML += `<p><strong>Última resposta:</strong> ${lastResponse.toLocaleString()}</p>`;
+            }
+            
+            statsContainer.innerHTML = statsHTML;
+        }
+
+        // Exportar dados
+        function exportData() {
+            if (savedData.length === 0) {
+                alert('Nenhum dado para exportar.');
+                return;
+            }
+            
+            let csvContent = 'Timestamp;';
+            questions.forEach((question, index) => {
+                csvContent += `P${index + 1};`;
+            });
+            csvContent += '\n';
+            
+            savedData.forEach(response => {
+                csvContent += `${response.timestamp};`;
+                response.answers.forEach(answer => {
+                    csvContent += `${answer};`;
+                });
+                csvContent += '\n';
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'dados_questionario.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Exportar estatísticas
+        function exportStatistics() {
+            if (savedData.length === 0) {
+                alert('Nenhum dado para exportar.');
+                return;
+            }
+            
+            let statsContent = 'ESTATÍSTICAS DO QUESTIONÁRIO\n';
+            statsContent += `Total de respostas: ${savedData.length}\n\n`;
+            
+            questions.forEach((question, index) => {
+                statsContent += `${question.question}:\n`;
+                
+                const answers = savedData.map(data => data.answers[index]);
+                const counts = {};
+                
+                answers.forEach(answer => {
+                    counts[answer] = (counts[answer] || 0) + 1;
+                });
+                
+                for (const [answer, count] of Object.entries(counts)) {
+                    const percentage = (count / savedData.length) * 100;
+                    statsContent += `  ${answer}: ${count} (${percentage.toFixed(1)}%)\n`;
+                }
+                
+                statsContent += '\n';
+            });
+            
+            const blob = new Blob([statsContent], { type: 'text/plain;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'estatisticas_questionario.txt');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Inicializar a aplicação quando o documento estiver carregado
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
